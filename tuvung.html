@@ -73,8 +73,9 @@
         window.saveWordToCloud = async (wordData) => {
             const uid = auth.currentUser?.uid;
             if (!uid) return;
-            const safe = JSON.parse(JSON.stringify(wordData)); // strip undefined
-            const ref  = doc(db, 'users', uid, 'vocabulary', safe.word);
+            const safe = JSON.parse(JSON.stringify(wordData));
+            delete safe.rawEntry; // ← THÊM DÒNG NÀY
+            const ref = doc(db, 'users', uid, 'vocabulary', safe.word);
             await setDoc(ref, { ...safe, savedAt: new Date().toISOString() });
         };
 
@@ -1066,7 +1067,10 @@ function renderLookupUI(data) {
                 ${m.synonyms.slice(0,6).map(s=>`<span class="syn-badge">${s}</span>`).join('')}
             </div>`;
         }
-        const viDefs = (data.translatedDefs && data.translatedDefs[mi]) || [];
+        const parsedDefs = data.translatedDefsStr
+            ? JSON.parse(data.translatedDefsStr)
+            : (data.translatedDefs || []);
+        const viDefs = parsedDefs[mi] || [];
         m.definitions.forEach((def, di) => {
             const viText = viDefs[di] || '';
             html += `<div class="def-block">
@@ -1150,7 +1154,7 @@ async function lookupWord() {
             exampleEn: primaryExEn || 'No example available.',
             exampleVi: translatedExVi,
             audioUrl, rawEntry: entry, phrases,
-            translatedDefs, note: preservedNote,
+            translatedDefsStr: JSON.stringify(translatedDefs), note: preservedNote,
         };
 
         await saveWordToCloud(wordData);
