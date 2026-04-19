@@ -1,1 +1,519 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Từ Điển & Flashcard Cá Nhân</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --surface: #ffffff;
+            --background: #F3F4F6;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --success: #10B981;
+            --danger: #EF4444;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column; /* Đổi hướng flex để chứa footer */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .dashboard-card {
+            background-color: var(--surface);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            overflow: hidden;
+        }
+
+        /* Tabs Styling */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #E5E7EB;
+            padding-bottom: 10px;
+            overflow-x: auto; /* Thêm cuộn ngang nếu màn hình quá nhỏ */
+        }
+
+        .tab-btn {
+            background: none;
+            color: var(--text-muted);
+            border: none;
+            font-size: 16px; /* Chỉnh nhỏ một chút để vừa 3 tab */
+            font-weight: 600;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            background-color: #EEF2FF;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Search Section */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+            box-sizing: border-box; /* Đảm bảo padding không làm tràn width */
+            width: 100%;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        button:hover { background-color: var(--primary-hover); }
+
+        /* Flashcard Section */
+        .flashcard {
+            background-color: #F9FAFB;
+            border: 2px dashed #D1D5DB;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .fc-word {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 0 0 10px 0;
+        }
+
+        .fc-phonetic {
+            color: var(--text-muted);
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .fc-meaning {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--success);
+            margin: 15px 0;
+        }
+
+        .fc-example {
+            font-style: italic;
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .fc-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: #EEF2FF;
+        }
+
+        .audio-btn {
+            background-color: #EEF2FF;
+            color: var(--primary);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin: 10px auto;
+        }
+
+        .audio-btn:hover { background-color: #E0E7FF; }
+
+        /* Vùng kết quả tra từ */
+        #result-container { display: none; }
+        .word-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--background); padding-bottom: 15px; margin-bottom: 15px; }
+        .word-title { font-size: 28px; font-weight: bold; margin: 0; }
+        .section-title { font-size: 14px; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; }
+        .meaning { font-size: 16px; margin-bottom: 15px;}
+        .example { font-style: italic; border-left: 3px solid var(--primary); padding-left: 10px; color: #4B5563; }
+        .loading { text-align: center; color: var(--text-muted); display: none; margin: 20px 0; }
+        .stats { text-align: center; color: var(--text-muted); margin-bottom: 15px; font-size: 14px; }
+        
+        /* CSS cho danh sách từ đã lưu */
+        .saved-words-container {
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        /* Tùy chỉnh thanh cuộn */
+        .saved-words-container::-webkit-scrollbar { width: 6px; }
+        .saved-words-container::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
+        
+        .saved-word-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        
+        .saved-word-item:last-child { border-bottom: none; }
+        
+        .saved-word-info { flex: 1; }
+        .saved-word-info strong { color: var(--primary); font-size: 16px; }
+        .saved-word-info span { color: var(--text-muted); font-size: 13px; margin-left: 8px; }
+        .saved-word-meaning { font-size: 14px; color: var(--text-main); margin-top: 4px; }
+        
+        .delete-btn {
+            background: none;
+            color: var(--danger);
+            border: none;
+            padding: 5px;
+            margin-left: 10px;
+            font-size: 18px;
+        }
+        .delete-btn:hover { background-color: #FEE2E2; border-radius: 6px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-card">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('lookup', event)">🔍 Tra Từ</button>
+            <button class="tab-btn" onclick="switchTab('flashcard', event)">🃏 Flashcard</button>
+            <button class="tab-btn" onclick="switchTab('list', event)">📚 Đã Lưu</button>
+        </div>
+
+        <div id="tab-lookup" class="tab-content active">
+            <div class="search-box">
+                <input type="text" id="wordInput" placeholder="Nhập từ mới (VD: consistency)..." onkeypress="handleKeyPress(event)">
+                <button onclick="lookupWord()">Tra & Lưu</button>
+            </div>
+
+            <div id="loading" class="loading">Đang tra từ điển...</div>
+
+            <div id="result-container">
+                <div class="word-header">
+                    <div>
+                        <h3 class="word-title" id="displayWord">Word</h3>
+                        <span class="fc-phonetic" id="displayPhonetic">/wɜːd/</span>
+                    </div>
+                    <button class="audio-btn" onclick="playCurrentAudio()" title="Nghe phát âm">🔊</button>
+                </div>
+
+                <div class="section-title">Nghĩa tiếng Việt</div>
+                <p class="meaning" id="displayTranslation">Đang dịch...</p>
+
+                <div class="section-title">Ví dụ (Tiếng Anh)</div>
+                <p class="example" id="displayExample">Không tìm thấy ví dụ.</p>
+            </div>
+        </div>
+
+        <div id="tab-flashcard" class="tab-content">
+            <div class="stats" id="vocabStats">Bạn đang có 0 từ vựng đã lưu.</div>
+            
+            <div id="flashcard-container" class="flashcard" style="display: none;">
+                <div id="fc-front">
+                    <h2 class="fc-word" id="fc-word">Word</h2>
+                    <div class="fc-phonetic" id="fc-phonetic">/wɜːd/</div>
+                    <button class="audio-btn" onclick="playFlashcardAudio()">🔊</button>
+                </div>
+
+                <div id="fc-back" style="display: none; margin-top: 15px; border-top: 1px solid #E5E7EB; padding-top: 15px;">
+                    <div class="section-title">Nghĩa:</div>
+                    <div class="fc-meaning" id="fc-meaning">Nghĩa tiếng Việt</div>
+                    <div class="fc-example" id="fc-example">Ví dụ...</div>
+                </div>
+            </div>
+
+            <div class="fc-actions" id="fc-actions" style="display: none;">
+                <button class="btn-outline" id="btn-flip" onclick="flipCard()">👀 Xem Nghĩa</button>
+                <button onclick="nextCard()">⏭️ Từ Tiếp Theo</button>
+            </div>
+            
+            <div id="empty-state" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                Hãy quay lại tab "Tra Từ" và tra vài từ để bắt đầu ôn tập nhé!
+            </div>
+        </div>
+
+        <div id="tab-list" class="tab-content">
+            <input type="text" id="searchSavedInput" placeholder="Tìm kiếm trong danh sách đã lưu..." oninput="renderSavedWords()" style="margin-bottom: 15px;">
+            <div id="saved-words-container" class="saved-words-container">
+                </div>
+        </div>
+
+    </div>
+    
+    <footer style="margin-top: 25px; color: #6B7280; font-size: 13px; text-align: center; padding: 0 15px;">Lưu ý: Từ vựng chỉ lưu trữ trên dữ liệu của 1 máy; không hỗ trợ máy khác lưu các từ đã tra!</footer>
+    
+    <script>
+        let currentAudioUrl = '';
+        let currentWordText = '';
+        
+        // --- QUẢN LÝ DỮ LIỆU (LOCAL STORAGE) ---
+        function getSavedVocabulary() {
+            return JSON.parse(localStorage.getItem('myVocabulary')) || [];
+        }
+
+        function saveWordToLocal(wordData) {
+            let vocab = getSavedVocabulary();
+            // Kiểm tra xem từ đã tồn tại chưa để tránh lưu trùng
+            if (!vocab.find(v => v.word === wordData.word)) {
+                vocab.push(wordData);
+                localStorage.setItem('myVocabulary', JSON.stringify(vocab));
+            }
+        }
+
+        // --- TAB CHUYỂN ĐỔI ---
+        function switchTab(tabName, event) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // Xử lý active nút (phòng trường hợp gọi hàm không có event)
+            if(event) {
+                event.currentTarget.classList.add('active');
+            }
+
+            if (tabName === 'flashcard') {
+                initFlashcardMode();
+            } else if (tabName === 'list') {
+                renderSavedWords();
+            }
+        }
+
+        // --- CHỨC NĂNG TRA TỪ ---
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') lookupWord();
+        }
+
+        async function lookupWord() {
+            const word = document.getElementById('wordInput').value.trim().toLowerCase();
+            if (!word) return;
+
+            document.getElementById('result-container').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const dictResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+                if (!dictResponse.ok) throw new Error("Không tìm thấy từ.");
+                const dictData = await dictResponse.json();
+                
+                const transResponse = await fetch(`https://api.mymemory.translated.net/get?q=${word}&langpair=en|vi`);
+                const transData = await transResponse.json();
+
+                const entry = dictData[0];
+                const phonetic = entry.phonetic || (entry.phonetics.find(p => p.text) || {}).text || '';
+                
+                const audioObj = entry.phonetics.find(p => p.audio && p.audio.length > 0);
+                currentAudioUrl = audioObj ? audioObj.audio : '';
+                currentWordText = entry.word;
+
+                let example = "Không có ví dụ.";
+                for (let meaning of entry.meanings) {
+                    for (let def of meaning.definitions) {
+                        if (def.example) { example = def.example; break; }
+                    }
+                    if (example !== "Không có ví dụ.") break;
+                }
+
+                const translation = transData.responseData.translatedText;
+
+                // Hiển thị lên UI
+                document.getElementById('displayWord').innerText = entry.word;
+                document.getElementById('displayPhonetic').innerText = phonetic;
+                document.getElementById('displayTranslation').innerText = translation;
+                document.getElementById('displayExample').innerText = `"${example}"`;
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result-container').style.display = 'block';
+
+                // LƯU VÀO LOCAL STORAGE
+                saveWordToLocal({
+                    word: entry.word,
+                    phonetic: phonetic,
+                    translation: translation,
+                    example: example,
+                    audioUrl: currentAudioUrl
+                });
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                alert("Lỗi: " + error.message);
+            }
+        }
+
+        // --- CHỨC NĂNG PHÁT ÂM ---
+        function playAudio(text, url) {
+            if (url && url !== 'undefined') {
+                new Audio(url).play();
+            } else {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function playCurrentAudio() {
+            playAudio(currentWordText, currentAudioUrl);
+        }
+
+        function playFlashcardAudio() {
+            if(currentFlashcard) {
+                playAudio(currentFlashcard.word, currentFlashcard.audioUrl);
+            }
+        }
+
+        // --- CHỨC NĂNG FLASHCARD ---
+        let flashcardQueue = [];
+        let currentFlashcard = null;
+
+        function initFlashcardMode() {
+            const vocab = getSavedVocabulary();
+            document.getElementById('vocabStats').innerText = `Kho từ vựng của bạn: ${vocab.length} từ`;
+
+            if (vocab.length === 0) {
+                document.getElementById('flashcard-container').style.display = 'none';
+                document.getElementById('fc-actions').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('flashcard-container').style.display = 'flex';
+            document.getElementById('fc-actions').style.display = 'flex';
+
+            flashcardQueue = [...vocab].sort(() => Math.random() - 0.5);
+            nextCard();
+        }
+
+        function nextCard() {
+            if (flashcardQueue.length === 0) {
+                alert("Chúc mừng! Bạn đã ôn tập hết vòng. Danh sách sẽ được đảo lại.");
+                initFlashcardMode();
+                return;
+            }
+
+            currentFlashcard = flashcardQueue.pop();
+            
+            document.getElementById('fc-word').innerText = currentFlashcard.word;
+            document.getElementById('fc-phonetic').innerText = currentFlashcard.phonetic;
+            document.getElementById('fc-meaning').innerText = currentFlashcard.translation;
+            document.getElementById('fc-example').innerText = `"${currentFlashcard.example}"`;
+
+            document.getElementById('fc-back').style.display = 'none';
+            document.getElementById('btn-flip').style.display = 'inline-block';
+            
+            playFlashcardAudio();
+        }
+
+        function flipCard() {
+            document.getElementById('fc-back').style.display = 'block';
+            document.getElementById('btn-flip').style.display = 'none';
+        }
+
+        // --- TÍNH NĂNG MỚI: TÌM KIẾM TỪ ĐÃ LƯU ---
+        function renderSavedWords() {
+            const vocab = getSavedVocabulary();
+            const searchTerm = document.getElementById('searchSavedInput').value.trim().toLowerCase();
+            const container = document.getElementById('saved-words-container');
+            
+            // Lọc danh sách theo từ tiếng Anh hoặc nghĩa tiếng Việt
+            const filteredVocab = vocab.filter(item => 
+                item.word.toLowerCase().includes(searchTerm) || 
+                item.translation.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredVocab.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color: var(--text-muted); margin-top: 20px;">Không có từ nào.</p>';
+                return;
+            }
+
+            // Đảo ngược mảng để từ mới nhất hiển thị lên đầu
+            container.innerHTML = filteredVocab.reverse().map(item => `
+                <div class="saved-word-item">
+                    <div class="saved-word-info">
+                        <strong>${item.word}</strong> <span>${item.phonetic || ''}</span>
+                        <div class="saved-word-meaning">${item.translation}</div>
+                    </div>
+                    <button class="audio-btn" style="width: 35px; height: 35px; margin: 0;" onclick="playAudio('${item.word}', '${item.audioUrl}')" title="Nghe">🔊</button>
+                    <button class="delete-btn" onclick="deleteWord('${item.word}')" title="Xóa từ">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteWord(wordToDelete) {
+            if(confirm(`Bạn có chắc muốn xóa từ "${wordToDelete}" không?`)) {
+                let vocab = getSavedVocabulary();
+                vocab = vocab.filter(item => item.word !== wordToDelete);
+                localStorage.setItem('myVocabulary', JSON.stringify(vocab));
+                
+                // Render lại danh sách sau khi xóa
+                renderSavedWords();
+            }
+        }
+    </script>
+</body>
+</html>
