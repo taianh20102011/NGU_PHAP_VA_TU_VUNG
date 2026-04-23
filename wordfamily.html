@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordForm Pro - Morphological Dictionary</title>
+    <title>WordFamily Pro - Morphology Tool</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -14,120 +14,112 @@
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #0a0a0c;
+            background: #050505;
             color: #e2e8f0;
+            overflow-x: hidden;
         }
 
         .glass {
             background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             transition: all 0.3s ease;
         }
 
-        .glass:hover {
-            border-color: rgba(99, 102, 241, 0.4);
-            background: rgba(255, 255, 255, 0.04);
-        }
-
         .word-card {
-            animation: fadeIn 0.4s ease forwards;
+            animation: slideUp 0.4s ease-out forwards;
+            opacity: 0;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .ipa-text { color: #94a3b8; font-family: sans-serif; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #312e81; border-radius: 10px; }
     </style>
 </head>
 
 <body class="min-h-screen">
 
     <div id="authOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl">
-        <div class="glass p-10 rounded-[2rem] w-full max-w-sm text-center shadow-2xl">
-            <h2 class="text-3xl font-extrabold mb-2 tracking-tight">WF<span class="text-indigo-500">.PRO</span></h2>
-            <p class="text-gray-400 text-sm mb-8">Hệ thống học từ vựng chuyên sâu</p>
-            <input type="email" id="email" placeholder="Email" class="w-full p-4 mb-3 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 ring-indigo-500/50">
-            <input type="password" id="password" placeholder="Mật khẩu" class="w-full p-4 mb-8 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 ring-indigo-500/50">
+        <div class="glass p-10 rounded-[2.5rem] w-full max-w-sm text-center">
+            <h2 class="text-3xl font-extrabold mb-2 tracking-tighter">WF<span class="text-indigo-500">.PRO</span></h2>
+            <p class="text-gray-400 text-xs mb-8 uppercase tracking-widest">Morphology Dictionary</p>
+            <input type="email" id="email" placeholder="Email" class="w-full p-4 mb-3 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 ring-indigo-500/50 transition-all">
+            <input type="password" id="password" placeholder="Mật khẩu" class="w-full p-4 mb-8 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 ring-indigo-500/50 transition-all">
             <div class="flex gap-3">
-                <button onclick="authAction('login')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 p-4 rounded-2xl font-bold transition-all">Đăng nhập</button>
+                <button onclick="authAction('login')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 p-4 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-500/20">Vào App</button>
                 <button onclick="authAction('reg')" class="flex-1 border border-white/10 hover:bg-white/5 p-4 rounded-2xl transition-all">Đăng ký</button>
             </div>
-            <p id="msg" class="text-xs mt-4 text-rose-400"></p>
+            <p id="msg" class="text-xs mt-4 text-rose-400 font-medium"></p>
         </div>
     </div>
 
-    <div id="app" class="hidden max-w-6xl mx-auto px-6 py-12">
-        <header class="flex flex-col md:flex-row justify-between items-center gap-8 mb-16">
-            <div>
-                <h1 class="text-4xl font-extrabold tracking-tighter mb-2">WORD<span class="text-indigo-500">FAMILY</span></h1>
-                <p class="text-gray-500 text-sm">Tra cứu gốc từ và các dạng biến thể hình thái học</p>
+    <div id="app" class="hidden max-w-6xl mx-auto px-6 py-10">
+        <header class="flex flex-col lg:flex-row justify-between items-center gap-8 mb-20">
+            <div class="text-center lg:text-left">
+                <h1 class="text-4xl font-black tracking-tighter">WORD<span class="text-indigo-500">FAMILY</span></h1>
+                <p class="text-gray-500 text-sm mt-1">Phân tích gốc từ và các dạng biến thể hình thái học</p>
             </div>
 
-            <div class="relative w-full md:w-[450px]">
+            <div class="relative w-full max-w-lg">
                 <input type="text" id="wordInput" onkeypress="if(event.key==='Enter') findWF()" 
-                    placeholder="Nhập từ gốc (vd: success, beauty)..."
-                    class="w-full p-5 pl-7 bg-white/5 border border-white/10 rounded-[2rem] outline-none focus:ring-4 ring-indigo-500/20 text-lg transition-all">
-                <button onclick="findWF()" class="absolute right-3 top-3 bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-2.5 rounded-[1.5rem] font-bold shadow-lg shadow-indigo-500/20 transition-all">
+                    placeholder="Nhập từ gốc (vd: success, pressure)..."
+                    class="w-full p-5 pl-8 bg-white/5 border border-white/10 rounded-[2.5rem] outline-none focus:ring-4 ring-indigo-500/20 text-lg transition-all">
+                <button onclick="findWF()" class="absolute right-3 top-3 bg-indigo-500 hover:bg-indigo-600 text-white px-8 py-3 rounded-[2rem] font-bold transition-all">
                     Phân tích
                 </button>
             </div>
             
-            <button onclick="firebase.auth().signOut()" class="text-xs text-gray-500 hover:text-white transition-colors">Đăng xuất</button>
+            <button onclick="firebase.auth().signOut()" class="text-xs text-gray-600 hover:text-rose-400 transition-colors uppercase font-bold tracking-widest">Đăng xuất</button>
         </header>
 
         <section id="results" class="hidden">
-            <div class="mb-12 text-center">
+            <div class="mb-16 text-center">
                 <h2 id="rootWord" class="text-7xl font-black uppercase tracking-tighter text-white mb-4"></h2>
                 <div class="flex justify-center items-center gap-4">
-                    <span id="ipa" class="ipa-text text-xl"></span>
-                    <button id="audioBtn" onclick="playAudio()" class="p-3 bg-white/5 hover:bg-white/10 rounded-full transition-all">
+                    <span id="ipa" class="text-xl text-indigo-300/60 font-medium"></span>
+                    <button id="audioBtn" onclick="playAudio()" class="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-full transition-all border border-white/10">
                         🔊
                     </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="glass p-8 rounded-[2rem] border-t-4 border-indigo-500">
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="px-3 py-1 bg-indigo-500/10 text-indigo-400 text-xs font-bold rounded-lg uppercase tracking-widest">Động từ</span>
-                    </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass p-8 rounded-[2.5rem] border-t-4 border-indigo-500">
+                    <span class="inline-block px-4 py-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-black rounded-full uppercase tracking-widest mb-6">Động từ</span>
                     <div id="v-list" class="space-y-3"></div>
                 </div>
 
-                <div class="glass p-8 rounded-[2rem] border-t-4 border-emerald-500">
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-lg uppercase tracking-widest">Danh từ</span>
-                    </div>
+                <div class="glass p-8 rounded-[2.5rem] border-t-4 border-emerald-500">
+                    <span class="inline-block px-4 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-black rounded-full uppercase tracking-widest mb-6">Danh từ</span>
                     <div id="n-list" class="space-y-3"></div>
                 </div>
 
-                <div class="glass p-8 rounded-[2rem] border-t-4 border-amber-500">
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-bold rounded-lg uppercase tracking-widest">Tính từ</span>
-                    </div>
+                <div class="glass p-8 rounded-[2.5rem] border-t-4 border-amber-500">
+                    <span class="inline-block px-4 py-1 bg-amber-500/10 text-amber-400 text-[10px] font-black rounded-full uppercase tracking-widest mb-6">Tính từ</span>
                     <div id="adj-list" class="space-y-3"></div>
                 </div>
 
-                <div class="glass p-8 rounded-[2rem] border-t-4 border-rose-500">
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="px-3 py-1 bg-rose-500/10 text-rose-400 text-xs font-bold rounded-lg uppercase tracking-widest">Trạng từ</span>
-                    </div>
+                <div class="glass p-8 rounded-[2.5rem] border-t-4 border-rose-500">
+                    <span class="inline-block px-4 py-1 bg-rose-500/10 text-rose-400 text-[10px] font-black rounded-full uppercase tracking-widest mb-6">Trạng từ</span>
                     <div id="adv-list" class="space-y-3"></div>
                 </div>
             </div>
 
-            <div class="mt-16 pt-8 border-t border-white/5">
-                <h3 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Từ vựng vừa tra gần đây</h3>
+            <div class="mt-20 pt-10 border-t border-white/5">
+                <h3 class="text-[10px] font-black text-gray-600 uppercase mb-6 tracking-[0.2em]">Từ vựng đã lưu trên Cloud</h3>
                 <div id="history" class="flex flex-wrap gap-3"></div>
             </div>
         </section>
     </div>
 
     <script>
-        // CẤU HÌNH FIREBASE (Giữ nguyên của bạn)
+        // CẤU HÌNH FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyDNZlPQMDzCebPOY5Se0OpFsh7AkheZMOk",
             authDomain: "wordform-477a3.firebaseapp.com",
@@ -141,13 +133,16 @@
         const auth = firebase.auth(), db = firebase.firestore();
         let player = null, user = null;
 
-        // AUTH
-        async function authAction(t) {
-            const e = document.getElementById('email').value, p = document.getElementById('password').value;
+        // AUTHENTICATION LOGIC
+        async function authAction(type) {
+            const email = document.getElementById('email').value, 
+                  pass = document.getElementById('password').value;
             try {
-                if (t === 'reg') await auth.createUserWithEmailAndPassword(e, p);
-                else await auth.signInWithEmailAndPassword(e, p);
-            } catch (err) { document.getElementById('msg').innerText = err.message; }
+                if (type === 'reg') await auth.createUserWithEmailAndPassword(email, pass);
+                else await auth.signInWithEmailAndPassword(email, pass);
+            } catch (err) { 
+                document.getElementById('msg').innerText = err.message; 
+            }
         }
 
         auth.onAuthStateChanged(u => {
@@ -157,81 +152,93 @@
             if (u) loadHistory();
         });
 
-        // CORE LOGIC
+        // WORD FAMILY LOGIC (FIXED)
         async function findWF() {
             const word = document.getElementById('wordInput').value.trim().toLowerCase();
             if (!word) return;
 
-            // Loading state (optional)
-            document.getElementById('rootWord').innerText = "Analyzing...";
+            document.getElementById('rootWord').innerText = "...";
 
             try {
-                const [dictData, derData] = await Promise.all([
-                    fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`).then(r => r.ok ? r.json() : null),
-                    fetch(`https://api.datamuse.com/words?rel_der=${word}&md=p`).then(r => r.json())
-                ]);
+                // 1. Lấy dữ liệu từ Dictionary API (Phát âm, IPA, Word type gốc)
+                const dictPromise = fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`).then(r => r.ok ? r.json() : null);
 
-                render(word, dictData ? dictData[0] : null, derData);
+                // 2. Lấy dữ liệu phái sinh từ Datamuse (Sử dụng cả rel_der và sp để mở rộng kết quả)
+                const derPromise = fetch(`https://api.datamuse.com/words?rel_der=${word}&md=p&max=50`).then(r => r.json());
+                const prefixPromise = fetch(`https://api.datamuse.com/words?sp=${word.substring(0, 4)}*&md=p&max=100`).then(r => r.json());
+
+                const [dictData, derData, preData] = await Promise.all([dictPromise, derPromise, prefixPromise]);
+
+                // Gộp kết quả
+                const allRelated = [...derData, ...preData];
+                render(word, dictData ? dictData[0] : null, allRelated);
                 saveHistory(word);
             } catch (error) {
-                console.error("Lỗi truy xuất:", error);
+                console.error("Fetch error:", error);
             }
         }
 
-        function render(word, dict, derived) {
+        function render(word, dict, related) {
             document.getElementById('results').classList.remove('hidden');
             document.getElementById('rootWord').innerText = word;
             
-            // Phonetic
+            // Audio & IPA
             document.getElementById('ipa').innerText = dict?.phonetic || dict?.phonetics?.find(p => p.text)?.text || '';
             const audioSrc = dict?.phonetics?.find(p => p.audio !== '')?.audio;
             player = audioSrc ? new Audio(audioSrc) : null;
-            document.getElementById('audioBtn').style.display = player ? 'block' : 'none';
+            document.getElementById('audioBtn').style.opacity = player ? '1' : '0.2';
 
             const wf = { v: [], n: [], adj: [], adv: [] };
 
-            // 1. Phân loại từ gốc từ Dictionary
+            // Bước 1: Thêm từ gốc vào đúng loại từ của nó
             dict?.meanings.forEach(m => {
                 const pos = m.partOfSpeech.toLowerCase();
                 if (pos.includes('verb')) wf.v.push(word);
-                else if (pos.includes('noun')) wf.n.push(word);
-                else if (pos.includes('adj')) wf.adj.push(word);
-                else if (pos.includes('adv')) wf.adv.push(word);
+                if (pos.includes('noun')) wf.n.push(word);
+                if (pos.includes('adj')) wf.adj.push(word);
+                if (pos.includes('adv')) wf.adv.push(word);
             });
 
-            // 2. Lọc thông minh từ Datamuse
-            // Chỉ lấy những từ có độ tương đồng cao (tránh car -> career)
-            derived.forEach(d => {
-                const isRelated = d.word.includes(word.substring(0, Math.min(word.length, 4)));
-                if (isRelated) {
-                    if (d.tags?.includes('v')) wf.v.push(d.word);
-                    if (d.tags?.includes('n')) wf.n.push(d.word);
-                    if (d.tags?.includes('adj')) wf.adj.push(d.word);
-                    if (d.tags?.includes('adv')) wf.adv.push(d.word);
+            // Bước 2: Phân loại các từ liên quan (Lọc thông minh)
+            related.forEach(item => {
+                const w = item.word.toLowerCase();
+                // Chỉ lấy từ có chứa gốc từ hoặc từ gốc là một phần của từ đó (loại bỏ từ rác)
+                const isRelated = w.includes(word) || word.includes(w.substring(0, 4));
+                
+                if (isRelated && item.tags) {
+                    if (item.tags.includes('v')) wf.v.push(w);
+                    if (item.tags.includes('n')) wf.n.push(w);
+                    if (item.tags.includes('adj')) wf.adj.push(w);
+                    if (item.tags.includes('adv')) wf.adv.push(w);
                 }
             });
 
-            const renderList = (id, list) => {
-                const uniqueWords = [...new Set(list)];
-                document.getElementById(`${id}-list`).innerHTML = uniqueWords.length > 0 
-                    ? uniqueWords.map(w => `
-                        <div class="word-card bg-white/5 p-4 rounded-xl border border-white/5 hover:border-indigo-500/30 group">
+            // Hiển thị ra UI
+            const updateUI = (id, list) => {
+                // Lọc trùng và sắp xếp theo độ dài từ
+                const cleanList = [...new Set(list)].sort((a, b) => a.length - b.length);
+                
+                document.getElementById(`${id}-list`).innerHTML = cleanList.length > 0 
+                    ? cleanList.map((w, index) => `
+                        <div class="word-card bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-indigo-500/40 transition-all cursor-pointer group" 
+                             style="animation-delay: ${index * 0.1}s"
+                             onclick="document.getElementById('wordInput').value='${w}';findWF()">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-indigo-100">${w}</span>
-                                <span class="text-[10px] opacity-0 group-hover:opacity-100 transition-all text-indigo-400">Copy</span>
+                                <span class="font-bold text-indigo-50 tracking-tight">${w}</span>
+                                <span class="text-[9px] opacity-0 group-hover:opacity-100 text-indigo-400 font-black">VIEW</span>
                             </div>
                         </div>
                     `).join('')
-                    : `<p class="text-gray-600 italic text-sm text-center py-4">No data found</p>`;
+                    : `<p class="text-gray-700 italic text-xs text-center py-6">No family found</p>`;
             };
 
-            renderList('v', wf.v);
-            renderList('n', wf.n);
-            renderList('adj', wf.adj);
-            renderList('adv', wf.adv);
+            updateUI('v', wf.v);
+            updateUI('n', wf.n);
+            updateUI('adj', wf.adj);
+            updateUI('adv', wf.adv);
         }
 
-        // UTILS
+        // UTILS & FIREBASE SYNC
         function playAudio() { player?.play(); }
 
         async function saveHistory(word) {
@@ -242,10 +249,10 @@
         }
 
         function loadHistory() {
-            db.collection("users").doc(user.uid).collection("history").orderBy("time", "desc").limit(12).onSnapshot(s => {
+            db.collection("users").doc(user.uid).collection("history").orderBy("time", "desc").limit(10).onSnapshot(s => {
                 document.getElementById('history').innerHTML = s.docs.map(d =>
                     `<button onclick="document.getElementById('wordInput').value='${d.data().word}';findWF()" 
-                        class="px-4 py-2 bg-white/5 rounded-full text-xs border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 transition-all">
+                        class="px-5 py-2 bg-white/5 rounded-full text-xs font-bold border border-white/5 hover:bg-indigo-500 hover:border-indigo-500 transition-all text-gray-400 hover:text-white">
                         ${d.data().word}
                     </button>`
                 ).join('');
