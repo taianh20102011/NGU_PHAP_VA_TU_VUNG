@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordFamily Pro - Ultimate Edition</title>
+    <title>WordFamily Pro - Fixed Logic</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -19,84 +18,58 @@
         ::-webkit-scrollbar-thumb { background: #312e81; border-radius: 10px; }
     </style>
 </head>
-
 <body class="min-h-screen">
 
     <div id="authOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl">
         <div class="glass p-10 rounded-[2.5rem] w-full max-w-sm text-center">
             <h2 class="text-3xl font-extrabold mb-2 tracking-tighter">WF<span class="text-indigo-500">.PRO</span></h2>
-            <p class="text-gray-400 text-xs mb-8 uppercase tracking-widest text-[10px]">Morphology Dictionary</p>
             <input type="email" id="email" placeholder="Email" class="w-full p-4 mb-3 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 ring-indigo-500/50">
             <input type="password" id="password" placeholder="Mật khẩu" class="w-full p-4 mb-8 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 ring-indigo-500/50">
             <div class="flex gap-3">
-                <button onclick="authAction('login')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 p-4 rounded-2xl font-bold transition-all">Vào App</button>
-                <button onclick="authAction('reg')" class="flex-1 border border-white/10 hover:bg-white/5 p-4 rounded-2xl transition-all">Đăng ký</button>
+                <button onclick="authAction('login')" class="flex-1 bg-indigo-600 p-4 rounded-2xl font-bold">Vào App</button>
+                <button onclick="authAction('reg')" class="flex-1 border border-white/10 p-4 rounded-2xl">Đăng ký</button>
             </div>
-            <p id="msg" class="text-xs mt-4 text-rose-400"></p>
         </div>
     </div>
 
     <div id="app" class="hidden max-w-6xl mx-auto px-6 py-12">
         <header class="flex flex-col md:flex-row justify-between items-center gap-8 mb-16">
-            <div>
-                <h1 class="text-4xl font-extrabold tracking-tighter">WORD<span class="text-indigo-500">FAMILY</span></h1>
-                <p class="text-gray-500 text-sm">Công cụ phân tích cấu trúc từ vựng chuyên sâu</p>
-            </div>
-
+            <h1 class="text-4xl font-extrabold tracking-tighter">WORD<span class="text-indigo-500">FAMILY</span></h1>
             <div class="relative w-full md:w-[500px]">
-                <input type="text" id="wordInput" onkeypress="if(event.key==='Enter') findWF()" 
-                    placeholder="Nhập thành công, áp lực, đám đông..."
-                    class="w-full p-5 pl-7 bg-white/5 border border-white/10 rounded-[2rem] outline-none focus:ring-4 ring-indigo-500/20 text-lg">
-                <button onclick="findWF()" class="absolute right-3 top-3 bg-indigo-500 hover:bg-indigo-600 text-white px-8 py-2.5 rounded-[1.5rem] font-bold shadow-lg transition-all">
-                    Phân tích
-                </button>
+                <input type="text" id="wordInput" onkeypress="if(event.key==='Enter') findWF()" placeholder="Nhập từ cần tra..." class="w-full p-5 bg-white/5 border border-white/10 rounded-[2rem] outline-none">
+                <button onclick="findWF()" class="absolute right-3 top-3 bg-indigo-500 text-white px-8 py-2.5 rounded-[1.5rem] font-bold">Phân tích</button>
             </div>
-            
-            <button onclick="firebase.auth().signOut()" class="text-[10px] font-bold text-gray-500 hover:text-rose-400 uppercase tracking-widest transition-colors">Đăng xuất</button>
+            <button onclick="firebase.auth().signOut()" class="text-xs font-bold text-gray-500 uppercase">Đăng xuất</button>
         </header>
 
         <section id="results" class="hidden">
             <div class="mb-12 text-center">
-                <h2 id="rootWord" class="text-7xl font-black uppercase tracking-tighter text-white mb-4"></h2>
-                <div class="flex justify-center items-center gap-4">
-                    <span id="ipa" class="text-xl text-indigo-300/60 font-medium italic"></span>
-                    <button id="audioBtn" onclick="playAudio()" class="p-3 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-all">
-                        🔊
-                    </button>
-                </div>
+                <h2 id="rootWord" class="text-7xl font-black uppercase tracking-tighter text-white"></h2>
+                <div id="ipa" class="text-xl text-indigo-300/60 mt-4 italic"></div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="glass p-8 rounded-[2.5rem] border-t-4 border-indigo-500">
-                    <span class="px-3 py-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-black rounded-md uppercase tracking-widest mb-6 inline-block">Động từ</span>
+                    <span class="text-indigo-400 font-black uppercase text-[10px] mb-6 block">Động từ (Verb)</span>
                     <div id="v-list" class="space-y-3"></div>
                 </div>
-
                 <div class="glass p-8 rounded-[2.5rem] border-t-4 border-emerald-500">
-                    <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-black rounded-md uppercase tracking-widest mb-6 inline-block">Danh từ</span>
+                    <span class="text-emerald-400 font-black uppercase text-[10px] mb-6 block">Danh từ (Noun)</span>
                     <div id="n-list" class="space-y-3"></div>
                 </div>
-
                 <div class="glass p-8 rounded-[2.5rem] border-t-4 border-amber-500">
-                    <span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-[10px] font-black rounded-md uppercase tracking-widest mb-6 inline-block">Tính từ</span>
+                    <span class="text-amber-400 font-black uppercase text-[10px] mb-6 block">Tính từ (Adj)</span>
                     <div id="adj-list" class="space-y-3"></div>
                 </div>
-
                 <div class="glass p-8 rounded-[2.5rem] border-t-4 border-rose-500">
-                    <span class="px-3 py-1 bg-rose-500/10 text-rose-400 text-[10px] font-black rounded-md uppercase tracking-widest mb-6 inline-block">Trạng từ</span>
+                    <span class="text-rose-400 font-black uppercase text-[10px] mb-6 block">Trạng từ (Adv)</span>
                     <div id="adv-list" class="space-y-3"></div>
                 </div>
-            </div>
-
-            <div class="mt-20 pt-10 border-t border-white/5">
-                <h3 class="text-[10px] font-black text-gray-600 uppercase mb-6 tracking-widest">Từ vựng đã phân tích</h3>
-                <div id="history" class="flex flex-wrap gap-2"></div>
             </div>
         </section>
     </div>
 
     <script>
-        // FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyDNZlPQMDzCebPOY5Se0OpFsh7AkheZMOk",
             authDomain: "wordform-477a3.firebaseapp.com",
@@ -105,126 +78,81 @@
             messagingSenderId: "152774885997",
             appId: "1:152774885997:web:6832dd5436282cb225f564"
         };
-        
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
-        let player = null, user = null;
+        let user = null;
 
         async function authAction(t) {
             const e = document.getElementById('email').value, p = document.getElementById('password').value;
-            try {
-                if (t === 'reg') await auth.createUserWithEmailAndPassword(e, p);
-                else await auth.signInWithEmailAndPassword(e, p);
-            } catch (err) { document.getElementById('msg').innerText = err.message; }
+            try { t === 'reg' ? await auth.createUserWithEmailAndPassword(e, p) : await auth.signInWithEmailAndPassword(e, p); } catch (err) { alert(err.message); }
         }
 
         auth.onAuthStateChanged(u => {
             user = u;
             document.getElementById('authOverlay').classList.toggle('hidden', !!u);
             document.getElementById('app').classList.toggle('hidden', !u);
-            if (u) loadHistory();
         });
 
-        // CORE LOGIC (VÀNG: SỬA LỖI TẠI ĐÂY)
         async function findWF() {
             const word = document.getElementById('wordInput').value.trim().toLowerCase();
             if (!word) return;
-            document.getElementById('rootWord').innerText = "Analyzing...";
-
+            
             try {
-                // Chạy đồng thời 3 luồng để lấy dữ liệu tối đa
                 const [dictRes, derRes, suffixRes] = await Promise.all([
                     fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`).then(r => r.ok ? r.json() : null),
                     fetch(`https://api.datamuse.com/words?rel_der=${word}&md=p&max=50`).then(r => r.json()),
-                    fetch(`https://api.datamuse.com/words?sp=${word}*&md=p&max=50`).then(r => r.json()) // Lấy các từ bắt đầu bằng word
+                    fetch(`https://api.datamuse.com/words?sp=${word}*&md=p&max=50`).then(r => r.json())
                 ]);
 
-                // Gộp dữ liệu từ Datamuse
-                const combinedData = [...derRes, ...suffixRes];
-                render(word, dictRes ? dictRes[0] : null, combinedData);
-                saveHistory(word);
-            } catch (error) {
-                console.error(error);
-            }
+                render(word, dictRes ? dictRes[0] : null, [...derRes, ...suffixRes]);
+            } catch (e) { console.error(e); }
         }
 
-        function render(word, dict, relatedData) {
+        function render(word, dict, rawData) {
             document.getElementById('results').classList.remove('hidden');
             document.getElementById('rootWord').innerText = word;
-            
-            document.getElementById('ipa').innerText = dict?.phonetic || dict?.phonetics?.find(p => p.text)?.text || '';
-            const audioSrc = dict?.phonetics?.find(p => p.audio !== '')?.audio;
-            player = audioSrc ? new Audio(audioSrc) : null;
-            document.getElementById('audioBtn').style.opacity = player ? '1' : '0.2';
+            document.getElementById('ipa').innerText = dict?.phonetic || '';
 
-            const wf = { v: [], n: [], adj: [], adv: [] };
+            const wf = { v: new Set(), n: new Set(), adj: new Set(), adv: new Set() };
 
-            // 1. Phân loại từ gốc từ Dictionary API
-            dict?.meanings.forEach(m => {
-                const pos = m.partOfSpeech.toLowerCase();
-                if (pos.includes('verb')) wf.v.push(word);
-                if (pos.includes('noun')) wf.n.push(word);
-                if (pos.includes('adj')) wf.adj.push(word);
-                if (pos.includes('adv')) wf.adv.push(word);
-            });
-
-            // 2. Logic lọc "Họ hàng" thông minh
-            relatedData.forEach(item => {
+            rawData.forEach(item => {
                 const w = item.word.toLowerCase();
-                
-                // Điều kiện lọc:
-                // - Từ đó phải chứa từ gốc (vd: crowded chứa crowd)
-                // - HOẶC từ đó có độ tương đồng cao (trường hợp biến đổi đuôi phức tạp)
-                const isFamily = w.includes(word) || (word.length > 4 && w.startsWith(word.substring(0, 4)) && w.length < word.length + 5);
+                if (!w.includes(word.substring(0, 3))) return; // Lọc bỏ từ rác hoàn toàn
 
-                if (isFamily && item.tags) {
-                    if (item.tags.includes('v')) wf.v.push(w);
-                    if (item.tags.includes('n')) wf.n.push(w);
-                    if (item.tags.includes('adj')) wf.adj.push(w);
-                    if (item.tags.includes('adv')) wf.adv.push(w);
+                // HỆ THỐNG PHÂN LOẠI ƯU TIÊN THEO HẬU TỐ (SUFFIX)
+                if (w.endsWith('ly')) {
+                    wf.adv.add(w);
+                } else if (w.endsWith('able') || w.endsWith('ible') || w.endsWith('ate') || w.endsWith('ive') || w.endsWith('ous') || w.endsWith('ful') || w.endsWith('less') || w.endsWith('al') || w.endsWith('ic') || w.endsWith('ed')) {
+                    // Nếu kết thúc bằng 'ate', kiểm tra xem API có bảo là Verb không, nếu không mặc định là Adj
+                    if (w.endsWith('ate') && item.tags?.includes('v')) wf.v.add(w);
+                    else wf.adj.add(w);
+                } else if (w.endsWith('tion') || w.endsWith('ment') || w.endsWith('ness') || w.endsWith('ity') || w.endsWith('ance') || w.endsWith('ence') || w.endsWith('er') || w.endsWith('or') || w.endsWith('ship')) {
+                    wf.n.add(w);
+                } else if (item.tags?.includes('v')) {
+                    wf.v.add(w);
+                } else if (item.tags?.includes('n')) {
+                    wf.n.add(w);
                 }
             });
 
-            const updateUI = (id, list) => {
-                const cleanList = [...new Set(list)].sort((a, b) => a.length - b.length);
-                document.getElementById(`${id}-list`).innerHTML = cleanList.length > 0 
-                    ? cleanList.map((w, i) => `
-                        <div class="word-card bg-white/5 p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 transition-all cursor-pointer group" 
-                             style="animation-delay: ${i * 0.05}s"
-                             onclick="document.getElementById('wordInput').value='${w}';findWF()">
-                            <div class="flex justify-between items-center">
-                                <span class="font-bold text-indigo-50">${w}</span>
-                                <span class="text-[8px] opacity-0 group-hover:opacity-100 text-indigo-400 font-black">VIEW</span>
-                            </div>
-                        </div>
-                    `).join('')
-                    : `<p class="text-gray-700 italic text-[11px] text-center py-6">No family found</p>`;
+            // Đảm bảo từ gốc nằm đúng vị trí từ điển
+            dict?.meanings.forEach(m => {
+                const p = m.partOfSpeech.toLowerCase();
+                if (p.includes('verb')) wf.v.add(word);
+                if (p.includes('noun')) wf.n.add(word);
+                if (p.includes('adj')) wf.adj.add(word);
+                if (p.includes('adv')) wf.adv.add(word);
+            });
+
+            const draw = (id, set) => {
+                const list = [...set].sort((a, b) => a.length - b.length);
+                document.getElementById(`${id}-list`).innerHTML = list.length 
+                    ? list.map(w => `<div class="word-card bg-white/5 p-4 rounded-xl border border-white/5 font-bold text-indigo-50">${w}</div>`).join('')
+                    : `<p class="text-gray-700 italic text-xs text-center py-4">No data</p>`;
             };
 
-            updateUI('v', wf.v); updateUI('n', wf.n); updateUI('adj', wf.adj); updateUI('adv', wf.adv);
-        }
-
-        // UTILS
-        function playAudio() { player?.play(); }
-
-        async function saveHistory(word) {
-            if (!user) return;
-            await db.collection("users").doc(user.uid).collection("history").doc(word).set({
-                word, time: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-
-        function loadHistory() {
-            db.collection("users").doc(user.uid).collection("history").orderBy("time", "desc").limit(12).onSnapshot(s => {
-                document.getElementById('history').innerHTML = s.docs.map(d =>
-                    `<button onclick="document.getElementById('wordInput').value='${d.data().word}';findWF()" 
-                        class="px-4 py-1.5 bg-white/5 rounded-full text-[10px] font-bold border border-white/5 hover:bg-indigo-500 transition-all text-gray-500 hover:text-white">
-                        ${d.data().word}
-                    </button>`
-                ).join('');
-            });
+            draw('v', wf.v); draw('n', wf.n); draw('adj', wf.adj); draw('adv', wf.adv);
         }
     </script>
 </body>
-
 </html>
