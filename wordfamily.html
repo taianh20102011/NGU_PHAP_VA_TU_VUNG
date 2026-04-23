@@ -3,238 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Word Form Dashboard</title>
+    <title>Ultimate Word Analyzer Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
-        .wf-card { transition: all 0.3s ease; border: 1px solid #e2e8f0; }
-        .wf-card:hover { transform: translateY(-5px); border-color: #6366f1; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;800&display=swap');
+        body { font-family: 'Lexend', sans-serif; background: #0f172a; color: #f8fafc; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .card-noun { border-left: 4px solid #3b82f6; }
+        .card-verb { border-left: 4px solid #10b981; }
+        .card-adj { border-left: 4px solid #f59e0b; }
+        .card-adv { border-left: 4px solid #ef4444; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .animate-pop { animation: pop 0.3s ease-out; }
+        @keyframes pop { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
-<body class="p-4 lg:p-10">
+<body class="min-h-screen p-4 lg:p-8">
 
     <div class="max-w-7xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-            <div>
-                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Word<span class="text-indigo-600">Master</span></h1>
-                <p class="text-slate-500 font-medium">Hệ thống phân tích Word Form & Quiz tự động</p>
-            </div>
-            
-            <div class="flex w-full md:w-auto gap-2">
-                <input type="text" id="wordInput" placeholder="Nhập từ tiếng Anh..." 
-                       class="w-full md:w-80 p-4 rounded-2xl border-2 border-white shadow-sm focus:border-indigo-500 focus:outline-none transition-all bg-white">
-                <button onclick="lookupWord()" id="searchBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 transition-all active:scale-95">
+        <div class="flex flex-col items-center mb-12">
+            <h1 class="text-5xl font-extrabold mb-4 bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                WordForm AI Analyzer
+            </h1>
+            <div class="relative w-full max-w-2xl mt-4">
+                <input type="text" id="wordInput" placeholder="Nhập từ cần phân tích (vđ: create, success...)" 
+                       class="w-full p-5 pl-8 rounded-2xl bg-slate-800 border border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all text-xl">
+                <button onclick="analyzeWord()" id="searchBtn" class="absolute right-3 top-3 bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20">
                     Phân tích
                 </button>
             </div>
-        </header>
+        </div>
 
-        <main id="mainContent" class="hidden space-y-8">
+        <div id="resultArea" class="hidden animate-pop space-y-8">
             
-            <section class="bg-white p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="glass-panel p-8 rounded-3xl flex flex-wrap items-center justify-between gap-6">
                 <div class="flex items-center gap-6">
-                    <div id="audioBtn" onclick="playAudio()" class="cursor-pointer bg-indigo-50 p-5 rounded-2xl hover:bg-indigo-100 transition-colors group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-600 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div onclick="playAudio()" id="audioTrigger" class="w-16 h-16 flex items-center justify-center bg-indigo-600/20 rounded-2xl cursor-pointer hover:bg-indigo-600/30 transition-all group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-400 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                         </svg>
                     </div>
                     <div>
-                        <h2 id="displayWord" class="text-5xl font-black text-slate-800 uppercase tracking-tighter"></h2>
-                        <p id="phonetic" class="text-xl text-indigo-500 font-medium italic"></p>
+                        <h2 id="mainWord" class="text-5xl font-black tracking-tight uppercase"></h2>
+                        <p id="mainPhonetic" class="text-indigo-400 font-mono text-lg mt-1"></p>
                     </div>
                 </div>
-                <div id="quickStats" class="flex gap-4">
-                    </div>
-            </section>
+                <div class="flex flex-wrap gap-3" id="tagsArea"></div>
+            </div>
 
-            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="wf-card bg-white p-6 rounded-3xl">
-                    <div class="flex items-center gap-2 mb-4">
-                        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-                        <h3 class="text-lg font-bold text-slate-700 uppercase">Noun</h3>
-                    </div>
-                    <div id="nounList" class="space-y-4 custom-scroll max-h-80 overflow-y-auto pr-2"></div>
-                </div>
-
-                <div class="wf-card bg-white p-6 rounded-3xl border-t-4 border-t-green-500">
-                    <div class="flex items-center gap-2 mb-4">
-                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
-                        <h3 class="text-lg font-bold text-slate-700 uppercase">Verb</h3>
-                    </div>
-                    <div id="verbList" class="space-y-4 custom-scroll max-h-80 overflow-y-auto pr-2"></div>
-                </div>
-
-                <div class="wf-card bg-white p-6 rounded-3xl border-t-4 border-t-amber-500">
-                    <div class="flex items-center gap-2 mb-4">
-                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-                        <h3 class="text-lg font-bold text-slate-700 uppercase">Adjective</h3>
-                    </div>
-                    <div id="adjList" class="space-y-4 custom-scroll max-h-80 overflow-y-auto pr-2"></div>
-                </div>
-
-                <div class="wf-card bg-white p-6 rounded-3xl border-t-4 border-t-rose-500">
-                    <div class="flex items-center gap-2 mb-4">
-                        <span class="w-3 h-3 rounded-full bg-rose-500"></span>
-                        <h3 class="text-lg font-bold text-slate-700 uppercase">Adverb</h3>
-                    </div>
-                    <div id="advList" class="space-y-4 custom-scroll max-h-80 overflow-y-auto pr-2"></div>
-                </div>
-            </section>
-
-            <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 bg-slate-900 text-white p-8 rounded-3xl shadow-2xl relative overflow-hidden">
-                    <div class="relative z-10">
-                        <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
-                            <span class="p-2 bg-indigo-500 rounded-lg">✍️</span> Thử thách kiến thức
-                        </h3>
-                        <div id="quizContainer" class="space-y-6"></div>
-                        <button onclick="checkQuiz()" id="checkBtn" class="mt-8 w-full bg-indigo-500 hover:bg-indigo-400 py-4 rounded-2xl font-black uppercase tracking-widest transition-all">
-                            Kiểm tra kết quả
-                        </button>
-                    </div>
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500 opacity-10 rounded-full -mr-16 -mt-16"></div>
-                </div>
-
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                    <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center justify-between">
-                        <span>Lịch sử tra từ</span>
-                        <button onclick="clearHistory()" class="text-xs text-rose-500 hover:underline">Xóa hết</button>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-panel p-6 rounded-3xl card-noun relative overflow-hidden">
+                    <h3 class="text-blue-400 font-black mb-4 flex items-center justify-between uppercase tracking-widest text-sm">
+                        Noun <span>(Danh từ)</span>
                     </h3>
-                    <div id="historyList" class="flex flex-wrap gap-2"></div>
+                    <div id="nounData" class="space-y-4 custom-scroll max-h-96 overflow-y-auto pr-2"></div>
                 </div>
-            </section>
-        </main>
 
-        <div id="loader" class="hidden text-center py-20">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
-            <p class="mt-4 text-slate-500 font-medium">Đang bóc tách dữ liệu...</p>
+                <div class="glass-panel p-6 rounded-3xl card-verb relative overflow-hidden">
+                    <h3 class="text-emerald-400 font-black mb-4 flex items-center justify-between uppercase tracking-widest text-sm">
+                        Verb <span>(Động từ)</span>
+                    </h3>
+                    <div id="verbData" class="space-y-4 custom-scroll max-h-96 overflow-y-auto pr-2"></div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-3xl card-adj relative overflow-hidden">
+                    <h3 class="text-amber-400 font-black mb-4 flex items-center justify-between uppercase tracking-widest text-sm">
+                        Adjective <span>(Tính từ)</span>
+                    </h3>
+                    <div id="adjData" class="space-y-4 custom-scroll max-h-96 overflow-y-auto pr-2"></div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-3xl card-adv relative overflow-hidden">
+                    <h3 class="text-rose-400 font-black mb-4 flex items-center justify-between uppercase tracking-widest text-sm">
+                        Adverb <span>(Trạng từ)</span>
+                    </h3>
+                    <div id="advData" class="space-y-4 custom-scroll max-h-96 overflow-y-auto pr-2"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 glass-panel p-8 rounded-3xl border-2 border-indigo-500/30">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                        <span class="text-indigo-500">📝</span> Kiểm tra nhanh kiến thức
+                    </h3>
+                    <div id="quizBox" class="space-y-6"></div>
+                    <button onclick="verifyQuiz()" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-black uppercase tracking-widest transition-all shadow-lg">Kiểm tra đáp án</button>
+                </div>
+                
+                <div class="glass-panel p-8 rounded-3xl">
+                    <h3 class="text-xl font-bold mb-4">Từ đã tra</h3>
+                    <div id="historyBox" class="flex flex-wrap gap-2"></div>
+                    <button onclick="clearAllHistory()" class="mt-6 text-xs text-slate-500 hover:text-rose-400 underline">Xóa lịch sử</button>
+                </div>
+            </div>
         </div>
-        <div id="errorBox" class="hidden text-center py-20 bg-white rounded-3xl shadow-sm mt-10">
-            <p class="text-rose-500 text-xl font-bold">Không tìm thấy dữ liệu cho từ này!</p>
-            <p class="text-slate-400 mt-2">Bạn thử kiểm tra lại chính tả hoặc nhập từ khác nhé.</p>
+
+        <div id="loading" class="hidden text-center py-24">
+            <div class="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p class="mt-6 text-slate-400 font-medium tracking-widest uppercase text-sm">Đang quét toàn bộ hệ thống từ điển...</p>
         </div>
     </div>
 
     <script>
         let currentAudio = null;
-        let correctWord = "";
+        let activeWord = "";
 
-        // Tự động focus vào ô nhập khi load
-        window.onload = () => {
-            document.getElementById('wordInput').focus();
-            displayHistory();
-        };
+        // Tự động focus
+        document.getElementById('wordInput').focus();
+        document.getElementById('wordInput').addEventListener('keypress', e => e.key === 'Enter' && analyzeWord());
 
-        // Enter để search
-        document.getElementById('wordInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') lookupWord();
-        });
-
-        async function lookupWord() {
+        async function analyzeWord() {
             const word = document.getElementById('wordInput').value.trim().toLowerCase();
             if (!word) return;
 
-            showUI('loader');
-            
+            activeWord = word;
+            toggleStatus('loading');
+
             try {
-                const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-                if (!response.ok) throw new Error();
-                const data = await response.json();
-                
-                processData(data[0]);
-                saveToHistory(word);
-                showUI('mainContent');
+                // Gọi API Dictionary để lấy nghĩa gốc
+                const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+                const dictData = dictRes.ok ? await dictRes.json() : null;
+
+                // Gọi Datamuse để lấy thêm quan hệ từ vựng (Relational)
+                // rel_jjb: tìm tính từ liên quan, rel_jja: tìm danh từ liên quan
+                const dataMuseRes = await fetch(`https://api.datamuse.com/words?rel_trg=${word}&max=10`);
+                const dmData = await dataMuseRes.json();
+
+                renderDashboard(dictData ? dictData[0] : null, dmData);
+                saveHistory(word);
+                toggleStatus('resultArea');
             } catch (err) {
-                showUI('errorBox');
+                alert("Có lỗi kết nối. Hãy thử lại sau!");
             }
         }
 
-        function processData(data) {
-            correctWord = data.word;
-            document.getElementById('displayWord').innerText = data.word;
-            document.getElementById('phonetic').innerText = data.phonetic || (data.phonetics.find(p => p.text)?.text || "");
+        function renderDashboard(data, related) {
+            if (!data) {
+                alert("Không tìm thấy từ này. Thử từ khác nhé!");
+                toggleStatus('');
+                return;
+            }
+
+            document.getElementById('mainWord').innerText = data.word;
+            document.getElementById('mainPhonetic').innerText = data.phonetic || "";
             
-            // Xử lý Audio
-            const audioData = data.phonetics.find(p => p.audio !== "");
-            currentAudio = audioData ? new Audio(audioData.audio) : null;
-            document.getElementById('audioBtn').style.display = currentAudio ? 'block' : 'none';
+            // Audio xử lý
+            const audioObj = data.phonetics.find(p => p.audio !== "");
+            currentAudio = audioObj ? new Audio(audioObj.audio) : null;
+            document.getElementById('audioTrigger').style.opacity = currentAudio ? "1" : "0.3";
 
-            // Reset Columns
-            const columns = {
-                noun: document.getElementById('nounList'),
-                verb: document.getElementById('verbList'),
-                adjective: document.getElementById('adjList'),
-                adverb: document.getElementById('advList')
+            // Reset columns
+            const cols = {
+                noun: document.getElementById('nounData'),
+                verb: document.getElementById('verbData'),
+                adjective: document.getElementById('adjData'),
+                adverb: document.getElementById('advData')
             };
-            Object.values(columns).forEach(el => el.innerHTML = `<p class="text-slate-300 italic text-sm text-center py-4">Không có dữ liệu</p>`);
+            Object.values(cols).forEach(c => c.innerHTML = '<p class="text-slate-600 italic text-xs py-2">Dữ liệu chưa cập nhật</p>');
 
-            // Phân loại Word Forms
+            // Phân bổ nội dung vào cột
             data.meanings.forEach(m => {
                 const pos = m.partOfSpeech.toLowerCase();
-                let targetList = null;
-                if (pos.includes('noun')) targetList = columns.noun;
-                else if (pos.includes('verb')) targetList = columns.verb;
-                else if (pos.includes('adjective')) targetList = columns.adjective;
-                else if (pos.includes('adverb')) targetList = columns.adverb;
+                let target = null;
+                if (pos.includes('noun')) target = cols.noun;
+                else if (pos.includes('verb')) target = cols.verb;
+                else if (pos.includes('adj')) target = cols.adjective;
+                else if (pos.includes('adv')) target = cols.adverb;
 
-                if (targetList) {
-                    if (targetList.innerHTML.includes('Không có dữ liệu')) targetList.innerHTML = '';
-                    m.definitions.slice(0, 3).forEach(def => {
-                        const item = document.createElement('div');
-                        item.className = "p-3 bg-slate-50 rounded-xl border border-slate-100";
-                        item.innerHTML = `
-                            <p class="text-slate-700 text-sm leading-relaxed font-medium">${def.definition}</p>
-                            ${def.example ? `<p class="text-xs text-indigo-400 mt-2 italic font-semibold">" ${def.example} "</p>` : ''}
+                if (target) {
+                    if (target.innerHTML.includes('Dữ liệu chưa')) target.innerHTML = '';
+                    m.definitions.slice(0, 2).forEach(def => {
+                        const card = document.createElement('div');
+                        card.className = "bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50 mb-3 hover:bg-slate-800 transition-colors";
+                        card.innerHTML = `
+                            <p class="text-sm text-slate-300 leading-relaxed font-light">${def.definition}</p>
+                            ${def.example ? `<p class="text-xs text-indigo-400 mt-2 italic">Ex: "${def.example}"</p>` : ''}
                         `;
-                        targetList.appendChild(item);
+                        target.appendChild(card);
                     });
                 }
             });
+
+            // Gắn tags cho các từ liên quan từ Datamuse
+            const tagsArea = document.getElementById('tagsArea');
+            tagsArea.innerHTML = related.slice(0, 5).map(r => `
+                <span class="px-4 py-1.5 bg-slate-800 rounded-full text-xs font-bold text-slate-400 border border-slate-700">#${r.word}</span>
+            `).join('');
 
             generateQuiz(data);
         }
 
         function generateQuiz(data) {
-            const container = document.getElementById('quizContainer');
-            container.innerHTML = "";
+            const box = document.getElementById('quizBox');
+            box.innerHTML = "";
             let count = 0;
 
-            for (const m of data.meanings) {
-                for (const def of m.definitions) {
-                    if (count < 2) {
-                        const qDiv = document.createElement('div');
-                        qDiv.className = "bg-slate-800 p-5 rounded-2xl border border-slate-700";
-                        qDiv.innerHTML = `
-                            <p class="text-indigo-400 text-xs font-black uppercase mb-2 tracking-widest">Thử thách ${count + 1} (${m.partOfSpeech})</p>
-                            <p class="text-slate-100 mb-4 font-medium italic text-lg leading-snug">"... ${def.definition} ..."</p>
-                            <input type="text" class="quiz-input w-full p-4 bg-slate-900 border-2 border-slate-700 rounded-xl focus:border-indigo-500 outline-none transition-all text-white font-bold" placeholder="Nhập từ chính xác...">
-                            <p class="feedback mt-3 text-sm hidden"></p>
+            data.meanings.forEach(m => {
+                m.definitions.forEach(def => {
+                    if (count < 2 && def.definition.length < 150) {
+                        const div = document.createElement('div');
+                        div.className = "p-5 bg-slate-800/50 rounded-2xl border border-slate-700";
+                        div.innerHTML = `
+                            <p class="text-xs font-black text-indigo-400 uppercase mb-2 tracking-widest">Question ${count + 1} (${m.partOfSpeech})</p>
+                            <p class="text-slate-200 mb-4 font-medium italic">" ${def.definition} "</p>
+                            <input type="text" class="quiz-input w-full p-4 bg-slate-900 border-2 border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-white font-bold transition-all" placeholder="Nhập đáp án...">
+                            <p class="feedback mt-2 text-sm hidden font-bold"></p>
                         `;
-                        container.appendChild(qDiv);
+                        box.appendChild(div);
                         count++;
                     }
-                }
-            }
+                });
+            });
         }
 
-        function checkQuiz() {
+        function verifyQuiz() {
             const inputs = document.querySelectorAll('.quiz-input');
-            const feedbacks = document.querySelectorAll('.feedback');
-            
-            inputs.forEach((input, idx) => {
-                const isCorrect = input.value.trim().toLowerCase() === correctWord.toLowerCase();
-                feedbacks[idx].classList.remove('hidden');
+            const feeds = document.querySelectorAll('.feedback');
+            inputs.forEach((input, i) => {
+                const isCorrect = input.value.trim().toLowerCase() === activeWord;
+                feeds[i].classList.remove('hidden');
                 if (isCorrect) {
-                    feedbacks[idx].innerHTML = "✨ Tuyệt vời! Bạn trả lời đúng rồi.";
-                    feedbacks[idx].className = "feedback mt-3 text-sm text-green-400 font-bold";
-                    input.className = "quiz-input w-full p-4 bg-slate-900 border-2 border-green-500 rounded-xl text-white font-bold";
+                    feeds[i].innerText = "✓ Chính xác!";
+                    feeds[i].className = "feedback mt-2 text-sm text-emerald-400 font-bold";
+                    input.className = "quiz-input w-full p-4 bg-slate-900 border-2 border-emerald-500 rounded-xl outline-none text-white font-bold";
                 } else {
-                    feedbacks[idx].innerHTML = `❌ Sai rồi. Đáp án là: <span class="underline">${correctWord}</span>`;
-                    feedbacks[idx].className = "feedback mt-3 text-sm text-rose-400 font-bold";
-                    input.className = "quiz-input w-full p-4 bg-slate-900 border-2 border-rose-500 rounded-xl text-white font-bold";
+                    feeds[i].innerText = `✗ Đáp án: ${activeWord}`;
+                    feeds[i].className = "feedback mt-2 text-sm text-rose-400 font-bold";
+                    input.className = "quiz-input w-full p-4 bg-slate-900 border-2 border-rose-500 rounded-xl outline-none text-white font-bold";
                 }
             });
         }
@@ -243,40 +239,34 @@
             if (currentAudio) currentAudio.play();
         }
 
-        function showUI(id) {
-            ['mainContent', 'loader', 'errorBox'].forEach(el => document.getElementById(el).classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
+        function toggleStatus(id) {
+            ['loading', 'resultArea'].forEach(el => document.getElementById(el).classList.add('hidden'));
+            if (id) document.getElementById(id).classList.remove('hidden');
         }
 
-        // History Management
-        function saveToHistory(word) {
-            let history = JSON.parse(localStorage.getItem('words_history') || '[]');
-            if (!history.includes(word)) {
-                history.unshift(word);
-                localStorage.setItem('words_history', JSON.stringify(history.slice(0, 20)));
+        function saveHistory(word) {
+            let h = JSON.parse(localStorage.getItem('wf_history') || '[]');
+            if (!h.includes(word)) {
+                h.unshift(word);
+                localStorage.setItem('wf_history', JSON.stringify(h.slice(0, 15)));
             }
-            displayHistory();
+            renderHistory();
         }
 
-        function displayHistory() {
-            const list = document.getElementById('historyList');
-            const history = JSON.parse(localStorage.getItem('words_history') || '[]');
-            list.innerHTML = history.map(w => `
-                <button onclick="quickSearch('${w}')" class="px-4 py-2 bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-600 rounded-xl text-sm font-bold transition-all capitalize">
-                    ${w}
-                </button>
-            `).join('') || '<p class="text-slate-400 text-sm">Chưa có lịch sử tra từ.</p>';
+        function renderHistory() {
+            const box = document.getElementById('historyBox');
+            const h = JSON.parse(localStorage.getItem('wf_history') || '[]');
+            box.innerHTML = h.map(w => `
+                <button onclick="document.getElementById('wordInput').value='${w}';analyzeWord()" class="px-4 py-2 bg-slate-800 hover:bg-indigo-600 rounded-xl text-xs font-bold transition-all uppercase tracking-tighter">${w}</button>
+            `).join('') || '<p class="text-slate-600 text-xs">Trống</p>';
         }
 
-        function quickSearch(w) {
-            document.getElementById('wordInput').value = w;
-            lookupWord();
+        function clearAllHistory() {
+            localStorage.removeItem('wf_history');
+            renderHistory();
         }
 
-        function clearHistory() {
-            localStorage.removeItem('words_history');
-            displayHistory();
-        }
+        renderHistory();
     </script>
 </body>
 </html>
